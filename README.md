@@ -1,4 +1,4 @@
-# Good Translator
+# Good Translator  (No API keys Needed)
 
 <img src="assets/header.jpg"  alt="Header"  style="display: block; margin: 0 auto" />
 <br>
