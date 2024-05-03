@@ -59,7 +59,7 @@ class GoodTranslator:
         print("Loading Object Complete")
         return gt
 
-    def _tranlsate_by_google(self, text: str) -> Union[str, None]:
+    def tranlsate_by_google(self, text: str) -> Union[str, None]:
         """Translation by google
 
         Args:
@@ -79,8 +79,16 @@ class GoodTranslator:
         except Exception as ex:
             return None
 
-    def _translate_by_model(self, src_lang, text: str) -> Union[str, None]:
-        t = time.time()
+    def translate_by_model(self, src_lang, text: str) -> Union[str, None]:
+        """Translation by local model.
+
+        Args:
+            src_lang: source language for the model
+            text: text to translate
+
+        Returns:
+            translated text or None
+        """
         self.local_tokenizer.src_lang = src_lang
         encoded_hi = self.local_tokenizer(text, return_tensors="pt")
         generated_tokens = self.local_translate_model.generate(
@@ -109,25 +117,25 @@ class GoodTranslator:
 
         if self.load_google_trans:
             try:
-                res = self.google_translate.translate(text)
+                res = self.tranlsate_by_google(text)
                 if res:
                     return res
                 else:
                     print("Got no result from Google Translation for: ", text)
-            except:
-                print("Google Translation failed for: ", text)
+            except Exception as ex:
+                print("Google Translation failed for: ", text, ex)
 
         if self.load_local_model:
             try:
                 lang = self.lang_detect_model._detect(text)
-                res = self._translate_by_model(lang, text)
+                res = self.translate_by_model(lang, text)
                 if res:
                     return res
                 else:
                     print("Got no result from Local Translation Model for: ", text)
 
-            except:
-                print("Local Translation Model failed for: ", text)
+            except Exception as ex:
+                print("Local Translation Model failed for: ", text, ex)
 
         return None
 
@@ -156,4 +164,3 @@ if __name__ == "__main__":
     t = "رائعة بكل المقاييس. ___ كل شيء كان استثنائي شكرا من القلب واخص الانسة مريم لذوقها الرفيع وحسن تعاملها. ___ كل شيء."
     r = gt.translate(t)
     print(r)
-
