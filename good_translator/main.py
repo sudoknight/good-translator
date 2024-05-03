@@ -59,25 +59,25 @@ class GoodTranslator:
         print("Loading Object Complete")
         return gt
 
-    def tranlsate_by_google(self, text: str) -> Union[str, None]:
+    def tranlsate_by_google(self, text: str) -> Union[str | None]:
         """Translation by google
 
         Args:
             text: string to translate
 
         Returns:
-            translated text or None
+            translated text or None in case of execption or null result
         """
 
         try:
             r = self.google_translate.translate(text=text)
             if len(r):
-                return r.lower().strip()
-            else:
-                return None
+                return r.strip()
 
         except Exception as ex:
-            return None
+            print("Google Translation failed for: ", text, ex)
+
+        return None
 
     def translate_by_model(self, src_lang, text: str) -> Union[str, None]:
         """Translation by local model.
@@ -87,18 +87,25 @@ class GoodTranslator:
             text: text to translate
 
         Returns:
-            translated text or None
+            translated text or None in case of execption or null result
         """
-        self.local_tokenizer.src_lang = src_lang
-        encoded_hi = self.local_tokenizer(text, return_tensors="pt")
-        generated_tokens = self.local_translate_model.generate(
-            **encoded_hi, forced_bos_token_id=self.local_tokenizer.get_lang_id("en")
-        )
-        r = self.local_tokenizer.batch_decode(
-            generated_tokens, skip_special_tokens=True
-        )
+        try:
+            self.local_tokenizer.src_lang = src_lang
+            encoded_hi = self.local_tokenizer(text, return_tensors="pt")
+            generated_tokens = self.local_translate_model.generate(
+                **encoded_hi, forced_bos_token_id=self.local_tokenizer.get_lang_id("en")
+            )
+            r = self.local_tokenizer.batch_decode(
+                generated_tokens, skip_special_tokens=True
+            )
 
-        return r
+            if len(r):
+                return r.strip()
+
+        except Exception as ex:
+            print("Local Translation Model failed for: ", text, ex)
+
+        return None
 
     def translate(self, text: str) -> Union[str, None]:
         """Translates the text using google translation model and offline model.
@@ -111,31 +118,29 @@ class GoodTranslator:
         Returns:
             tranlated text or None when no translation is performed
         """
+
+        if text is None or not isinstance(text, str):
+            print("Passed text is invalid value.")
+            return None
+
         if len(text) < 1:
             print("Passed text has zero length.")
             return None
 
         if self.load_google_trans:
-            try:
-                res = self.tranlsate_by_google(text)
-                if res:
-                    return res
-                else:
-                    print("Got no result from Google Translation for: ", text)
-            except Exception as ex:
-                print("Google Translation failed for: ", text, ex)
+            res = self.tranlsate_by_google(text)
+            if res:  # If not None and has valid value
+                return res
+            else:
+                print("Got no result from Google Translation for: ", text)
 
         if self.load_local_model:
-            try:
-                lang = self.lang_detect_model._detect(text)
-                res = self.translate_by_model(lang, text)
-                if res:
-                    return res
-                else:
-                    print("Got no result from Local Translation Model for: ", text)
-
-            except Exception as ex:
-                print("Local Translation Model failed for: ", text, ex)
+            lang = self.lang_detect_model._detect(text)
+            res = self.translate_by_model(lang, text)
+            if res:  # If not None and has valid value
+                return res
+            else:
+                print("Got no result from Local Translation Model for: ", text)
 
         return None
 
