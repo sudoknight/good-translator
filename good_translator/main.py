@@ -99,8 +99,10 @@ class GoodTranslator:
                 generated_tokens, skip_special_tokens=True
             )
 
-            if len(r):
-                return r.strip()
+            if r and isinstance(r, list):
+                r = r[0]  # get the translated output
+                if len(r):
+                    return r.strip()
 
         except Exception as ex:
             print("Local Translation Model failed for: ", text, ex)
