@@ -20,6 +20,8 @@ It uses [facebook/fasttext-language-identification](https://huggingface.co/faceb
 It uses [facebook/m2m100_1.2B](https://huggingface.co/facebook/m2m100_1.2B) model for performing offline translations. This model can directly translate between the 9,900 directions of 100 languages. It has 1.2B parameters. The model size is around 4.96GB. When the class object is initialized for the first time, this model is downloaded and stored in the cache dir "~/.cache/huggingface/hub"
 
 
+**<font color='red'>Find the langauges supported by each model/service in '[docs/supported_langauges.md](docs/supported_langauges.md)' </font>**
+
 ## Usage
 
 Install the package directly using:
@@ -28,15 +30,26 @@ Install the package directly using:
 python setup.py install
 ```
 
-#### Translating a single string
+#### Translating a single string  (other language to english)
 ```python
 from good_translator import GoodTranslator
 gt = GoodTranslator()
 text =  "Hola. Cómo estás ? ¿Cómo va todo en España?"
-gt.translate(text)
+gt.translate(text)  # default value for param target_lang="en"
 ```
 
 ![Demo1](assets/demo1.jpg)
+
+
+#### Translating a single string  (english to other language)
+```python
+from good_translator import GoodTranslator
+gt = GoodTranslator()
+text =  "Translate me to spanish please."
+gt.translate(text, target_lang="es")
+```
+
+![Demo1](assets/demo3.jpg)
 
 #### Translating a batch of strings 
 The result will contains list of tuples with (original text, translated text)
@@ -44,7 +57,7 @@ The result will contains list of tuples with (original text, translated text)
 from good_translator import GoodTranslator
 gt = GoodTranslator()
 texts = ["Hola. Cómo estás ? ¿Cómo va todo en España?", "Extraño la paella."]
-gt.batch_translate(texts)
+gt.batch_translate(texts)  # default value for param target_lang="en"
 ```
 
 ![Demo2](assets/demo2.jpg)

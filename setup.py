@@ -7,7 +7,7 @@ LONG_DESCRIPTION = (
 
 setup(
     name="good_translator",
-    version=0.1,
+    version=0.2,
     author="Hassan Ghalib",
     author_email="hassan.best01@gmail.com",
     description=DESCRIPTION,
