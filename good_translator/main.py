@@ -59,7 +59,7 @@ class GoodTranslator:
         print("Loading Object Complete")
         return gt
 
-    def tranlsate_by_google(self, text: str) -> Union[str | None]:
+    def tranlsate_by_google(self, text: str) -> Union[str, None]:
         """Translation by google
 
         Args:
@@ -79,12 +79,15 @@ class GoodTranslator:
 
         return None
 
-    def translate_by_model(self, src_lang, text: str) -> Union[str, None]:
+    def translate_by_model(
+        self, src_lang, text: str, target_lang: str = "en"
+    ) -> Union[str, None]:
         """Translation by local model.
 
         Args:
             src_lang: source language for the model
             text: text to translate
+            target_lang: target language to which the text will be translated
 
         Returns:
             translated text or None in case of execption or null result
@@ -93,7 +96,8 @@ class GoodTranslator:
             self.local_tokenizer.src_lang = src_lang
             encoded_hi = self.local_tokenizer(text, return_tensors="pt")
             generated_tokens = self.local_translate_model.generate(
-                **encoded_hi, forced_bos_token_id=self.local_tokenizer.get_lang_id("en")
+                **encoded_hi,
+                forced_bos_token_id=self.local_tokenizer.get_lang_id(target_lang),
             )
             r = self.local_tokenizer.batch_decode(
                 generated_tokens, skip_special_tokens=True
@@ -109,13 +113,14 @@ class GoodTranslator:
 
         return None
 
-    def translate(self, text: str) -> Union[str, None]:
+    def translate(self, text: str, target_lang: str = "en") -> Union[str, None]:
         """Translates the text using google translation model and offline model.
         If one model fails, the other one is used.
 
 
         Args:
             text: text to translate
+            target_lang: Language to which the text will be translated
 
         Returns:
             tranlated text or None when no translation is performed
@@ -129,7 +134,17 @@ class GoodTranslator:
             print("Passed text has zero length.")
             return None
 
+        if (
+            not isinstance(target_lang, str)
+            or len(target_lang) < 2
+            or len(target_lang) > 3
+        ):
+            raise Exception(
+                "Passed target_lang is not valid. Please visit 'docs/supported_langauges.md'"
+            )
+
         if self.load_google_trans:
+            self.google_translate.target = target_lang
             res = self.tranlsate_by_google(text)
             if res:  # If not None and has valid value
                 return res
@@ -137,8 +152,9 @@ class GoodTranslator:
                 print("Got no result from Google Translation for: ", text)
 
         if self.load_local_model:
-            lang = self.lang_detect_model._detect(text)
-            res = self.translate_by_model(lang, text)
+            # after detecting the langauge, get the language code supported by the model
+            src_lang = self.lang_detect_model._detect(text)
+            res = self.translate_by_model(src_lang, text, target_lang)
             if res:  # If not None and has valid value
                 return res
             else:
@@ -147,12 +163,13 @@ class GoodTranslator:
         return None
 
     def batch_translate(
-        self, ls_texts: List[str]
+        self, ls_texts: List[str], target_lang: str = "en"
     ) -> List[Tuple[str, Union[str, None]]]:
         """Tranlates batch of texts
 
         Args:
             ls_texts: list of strings to translate
+            target_lang: Language to which the list of texts will be translated
 
         Returns:
             list of tuples [ (<original_text>, <translated_text>) ]
@@ -160,7 +177,7 @@ class GoodTranslator:
 
         results = []
         for text in ls_texts:
-            r = self.translate(text)
+            r = self.translate(text, target_lang)
             results.append((text, r))
         return results
 
@@ -169,5 +186,6 @@ if __name__ == "__main__":
     gt = GoodTranslator()
     print(gt)
     t = "رائعة بكل المقاييس. ___ كل شيء كان استثنائي شكرا من القلب واخص الانسة مريم لذوقها الرفيع وحسن تعاملها. ___ كل شيء."
+    t2 = "Compared to pervious month of july your performance has declined by 4 points. Please pay attention."
     r = gt.translate(t)
     print(r)
